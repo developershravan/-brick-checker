@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Brick Classifier</title>
+</head>
+<body>
+  <h2>Brick Classifier</h2>
+
+  <input type="file" id="upload" accept="image/*">
+  <br><br>
+  <img id="preview" width="224" height="224" style="display:none;" />
+  <br><br>
+
+  <button id="predictBtn" disabled>Check Quality</button>
+  <button id="resetBtn">Reset</button>
+
+  <h3 id="result" style="color: green;"></h3>
+
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <script>
+    const modelURL = "https://teachablemachine.withgoogle.com/models/-E79ZIP8I/model.json";
+    const metadataURL = "https://teachablemachine.withgoogle.com/models/-E79ZIP8I/metadata.json";
+
+    let model;
+    const upload = document.getElementById("upload");
+    const preview = document.getElementById("preview");
+    const result = document.getElementById("result");
+    const predictBtn = document.getElementById("predictBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    async function loadModel() {
+      try {
+        model = await tmImage.load(modelURL, metadataURL);
+        console.log("✅ Model loaded");
+      } catch (err) {
+        result.innerText = "❌ Could not load model.";
+      }
+    }
+
+    upload.addEventListener("change", () => {
+      const file = upload.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+        result.innerText = "";
+        predictBtn.disabled = false;
+      }
+    });
+
+    predictBtn.addEventListener("click", async () => {
+      if (!model) {
+        result.innerText = "Model not loaded.";
+        return;
+      }
+      const prediction = await model.predict(preview);
+      let best = prediction.reduce((a, b) => a.probability > b.probability ? a : b);
+      result.innerText = `🧱 Result: ${best.className}`;
+    });
+
+    resetBtn.addEventListener("click", () => {
+      preview.src = "";
+      preview.style.display = "none";
+      upload.value = "";
+      result.innerText = "";
+      predictBtn.disabled = true;
+    });
+
+    loadModel();
+  </script>
+</body>
+</html>
